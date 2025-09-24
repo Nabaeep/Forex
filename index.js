@@ -8,7 +8,10 @@ app.use(cors());
 
 app.get("/forex-events", async (req, res) => {
   try {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
     const page = await browser.newPage();
 
     await page.setUserAgent(
@@ -22,23 +25,33 @@ app.get("/forex-events", async (req, res) => {
 
     const events = [];
 
+    let lastDate = "";
+    let lastTime = "";
+
     $(".calendar__row").each((i, row) => {
-      const date = $(row).find(".calendar__date span").first().text().trim();
-      const time = $(row).find(".calendar__time").first().text().trim();
+      const dateCell = $(row).find(".calendar__date span").first().text().trim();
+      const timeCell = $(row).find(".calendar__time").first().text().trim();
       const title = $(row).find(".calendar__event-title").text().trim();
 
+      if (dateCell) lastDate = dateCell;
+      if (timeCell) lastTime = timeCell;
+
       if (title) {
-        events.push({ date, time, title });
+        events.push({
+          date: lastDate,
+          time: lastTime,
+          title: title
+        });
       }
     });
 
     await browser.close();
     res.json(events);
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch Forex events" });
   }
 });
 
-app.listen(3000, () => console.log("API running on http://localhost:3000"));
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`API running on http://localhost:${port}`));
