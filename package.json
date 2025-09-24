@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "api/forex-events.js",
   "scripts": {
-    "start": "vercel dev"
+    "start": "node forex-events.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
