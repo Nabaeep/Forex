@@ -1,7 +1,8 @@
-FROM node:18-slim
+FROM node:20-slim
 
-# Install dependencies
+# Install Chromium + dependencies
 RUN apt-get update && apt-get install -y \
+  chromium \
   wget \
   ca-certificates \
   fonts-liberation \
@@ -15,22 +16,27 @@ RUN apt-get update && apt-get install -y \
   libxcomposite1 \
   libxdamage1 \
   libxrandr2 \
+  libgbm1 \
   xdg-utils \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
+# Set Puppeteer environment so it knows where Chromium is
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies first (better for caching)
 COPY package*.json ./
-RUN npm install
+RUN npm install --omit=dev
 
 # Copy app files
 COPY . .
 
-# Expose port (optional, based on your app)
+# Expose port (optional)
 EXPOSE 3000
 
-# Start your app
+# Start app
 CMD ["node", "index.js"]
