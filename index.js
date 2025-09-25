@@ -1,5 +1,5 @@
 const express = require("express");
-const puppeteer = require("puppeteer-core"); // no bundled Chromium
+const puppeteer = require("puppeteer"); // full Chromium bundled
 const cheerio = require("cheerio");
 const cors = require("cors");
 
@@ -9,9 +9,8 @@ app.use(cors());
 app.get("/", async (req, res) => {
   let browser;
   try {
-    // Launch Puppeteer using your Windows Chrome
+    // Launch headless Chromium (works on Linux in Render)
     browser = await puppeteer.launch({
-      executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", // Windows path
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
@@ -40,7 +39,7 @@ app.get("/", async (req, res) => {
       let impact = "";
       const spanImpact = $(row).find(".calendar__impact span[title]");
       if (spanImpact.length) {
-        impact = spanImpact.attr("title").split(" ")[0]; // "Low", "Medium", "High"
+        impact = spanImpact.attr("title").split(" ")[0];
       } else {
         const imgImpact = $(row).find(".calendar__impact-icon img").attr("src") || "";
         if (imgImpact.includes("ff-impact-red")) impact = "High";
@@ -53,9 +52,7 @@ app.get("/", async (req, res) => {
       if (time) lastTime = time; else time = lastTime;
       if (impact) lastImpact = impact; else impact = lastImpact;
 
-      if (title) {
-        events.push({ date, time, title, impact });
-      }
+      if (title) events.push({ date, time, title, impact });
     });
 
     res.json(events);
@@ -68,4 +65,4 @@ app.get("/", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`API running on port ${PORT}`));

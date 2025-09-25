@@ -19,7 +19,8 @@
     "puppeteer": "^24.22.3",
     "puppeteer-core": "^24.22.3",
     "request-promise": "^0.0.1",
-    "serverless-http": "^4.0.0"
+    "serverless-http": "^4.0.0",
+    "ws": "^8.18.3"
   },
   "description": ""
 }
