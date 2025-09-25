@@ -8,11 +8,10 @@ app.use(cors());
 
 app.get('/', async (req, res) => {
   try {
-    const browser = await playwright.chromium.launch({
-  headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
-
+    const browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 
     // Create context with user agent
     const context = await browser.newContext({
