@@ -1,8 +1,8 @@
-FROM node:20-slim
+# Use official Node.js LTS
+FROM node:18-slim
 
-# Install Chromium + dependencies
+# Install dependencies needed by Chromium
 RUN apt-get update && apt-get install -y \
-  chromium \
   wget \
   ca-certificates \
   fonts-liberation \
@@ -16,27 +16,36 @@ RUN apt-get update && apt-get install -y \
   libxcomposite1 \
   libxdamage1 \
   libxrandr2 \
-  libgbm1 \
   xdg-utils \
+  gnupg \
+  unzip \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
-# Set Puppeteer environment so it knows where Chromium is
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Add user so we don’t run as root
+RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
+    && mkdir -p /home/pptruser/Downloads \
+    && chown -R pptruser:pptruser /home/pptruser
 
-# Set working directory
+# Set workdir
 WORKDIR /app
 
-# Install dependencies first (better for caching)
+# Copy package.json and install dependencies
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
-# Copy app files
+# Copy app source
 COPY . .
 
-# Expose port (optional)
+# Set environment variables
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# Expose port
 EXPOSE 3000
+
+# Run app as non-root user
+USER pptruser
 
 # Start app
 CMD ["node", "index.js"]
