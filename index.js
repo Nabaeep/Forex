@@ -2,15 +2,20 @@ const express = require("express");
 const puppeteer = require("puppeteer"); // full Chromium bundled
 const cheerio = require("cheerio");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
 
 app.get("/", async (req, res) => {
   let browser;
+  browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox,","--single-process", "--no-zygote"],
+    executablePath:process.env.NODE_ENV === 'production' ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath(),
+  });
   try {
     // Launch headless Chromium (works on Linux in Render)
-    browser = await puppeteer.launch();
+    
 
     const page = await browser.newPage();
     await page.setUserAgent(
