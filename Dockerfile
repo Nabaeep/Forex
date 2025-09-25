@@ -1,16 +1,13 @@
-FROM mcr.microsoft.com/playwright:focal
+FROM ghcr.io/puppeteer/puppeteer:24.22.3
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-WORKDIR /app
+    WORKDIR /usr/src/app
 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
+    COPY package*.json ./
 
-# Copy the rest of your code
-COPY . .
+    RUN npm install
 
-# Expose port if needed
-EXPOSE 3000
+    COPY . .
 
-# Run the app
-CMD ["node", "index.js"]
+    CMD ["node", "index.js"]

@@ -10,10 +10,7 @@ app.get("/", async (req, res) => {
   let browser;
   try {
     // Launch headless Chromium (works on Linux in Render)
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    browser = await puppeteer.launch();
 
     const page = await browser.newPage();
     await page.setUserAgent(
