@@ -1,5 +1,5 @@
 const express = require("express");
-const puppeteer = require("puppeteer-core");
+const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
 const cors = require("cors");
 
@@ -10,9 +10,9 @@ app.get("/", async (req, res) => {
   try {
 const browser = await puppeteer.launch({
   headless: true,
-  executablePath: '/usr/bin/chromium-browser', // correct Linux path
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
+
 
 
 
