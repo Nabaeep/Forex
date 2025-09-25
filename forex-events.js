@@ -1,16 +1,21 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 const cheerio = require("cheerio");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
 
-app.get("/forex-events", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
+   const browser = await puppeteer.launch({
+  headless: true,
+  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
 
+
+    const page = await browser.newPage();
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
     );
@@ -21,14 +26,22 @@ app.get("/forex-events", async (req, res) => {
     const $ = cheerio.load(content);
 
     const events = [];
+    let lastDate = "";
+    let lastTime = "";
+    let lastImpact = "";
 
     $(".calendar__row").each((i, row) => {
-      const date = $(row).find(".calendar__date span").first().text().trim();
-      const time = $(row).find(".calendar__time").first().text().trim();
-      const title = $(row).find(".calendar__event-title").text().trim();
+      let date = $(row).find(".calendar__date span").first().text().trim();
+      let time = $(row).find(".calendar__time").first().text().trim();
+      let title = $(row).find(".calendar__event-title").text().trim();
+      let impact = $(row).find(".calendar__impact .icon").attr("title") || "";
+
+      if (date) lastDate = date; else date = lastDate;
+      if (time) lastTime = time; else time = lastTime;
+      if (impact) lastImpact = impact; else impact = lastImpact;
 
       if (title) {
-        events.push({ date, time, title });
+        events.push({ date, time, title, impact });
       }
     });
 
@@ -41,4 +54,6 @@ app.get("/forex-events", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("API running on http://localhost:3000"));
+// Use dynamic port for hosting compatibility
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
