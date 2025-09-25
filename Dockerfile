@@ -1,17 +1,13 @@
-FROM ghcr.io/puppeteer/puppeteer:21.5.2
+FROM ghcr.io/puppeteer/puppeteer:24.22.3
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-# Set working directory
-WORKDIR /app
+    WORKDIR /usr/src/app
 
-# Copy package.json and install deps
-COPY package*.json ./
-RUN npm install
+    COPY package*.json ./
 
-# Copy source
-COPY . .
+    RUN npm install
 
-# Expose API port
-EXPOSE 3000
+    COPY . .
 
-# Run app
-CMD ["node", "index.js"]
+    CMD ["node", "index.js"]
