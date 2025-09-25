@@ -1,13 +1,23 @@
 FROM ghcr.io/puppeteer/puppeteer:24.22.3
+
+# Avoid downloading Chromium again since the image already has it
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-    WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /usr/src/app
 
-    COPY package*.json ./
+# Copy package files first for better caching
+COPY package*.json ./
 
-    RUN npm install
+# Switch to root to allow npm to write package-lock.json
+USER root
+RUN npm install
+# Switch back to Puppeteer user for security
+USER pptruser
 
-    COPY . .
+# Copy the rest of the application code
+COPY . .
 
-    CMD ["node", "index.js"]
+# Start the application
+CMD ["node", "index.js"]
