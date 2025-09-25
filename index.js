@@ -21,15 +21,16 @@ async function safeGoto(page, url, retries = 3) {
 }
 
 app.get("/", async (req, res) => {
-  let browser;
-  try {
-    browser = await puppeteer.launch({
+
+   const browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
       executablePath: process.env.NODE_ENV === 'production'
         ? process.env.PUPPETEER_EXECUTABLE_PATH
         : puppeteer.executablePath(),
     });
+  try {
+   
 
     const page = await browser.newPage();
     await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36");
