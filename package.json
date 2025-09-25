@@ -1,15 +1,22 @@
 {
   "name": "forex",
   "version": "1.0.0",
-  "main": "api/forex-events.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node forex-events.js"
+    "start": "node index.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
+    "axios": "^1.12.2",
     "cheerio": "^1.1.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "puppeteer-core": "^24.22.3",
-    "serverless-http": "^3.1.0"
-  }
+    "express": "^5.1.0",
+    "node-cron": "^4.2.1",
+    "puppeteer": "^24.22.2",
+    "request-promise": "^0.0.1",
+    "serverless-http": "^4.0.0"
+  },
+  "description": ""
 }
