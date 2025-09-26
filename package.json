@@ -5,11 +5,9 @@
   "engines": {
     "node": "20.x"
   },
-"scripts": {
-  "start": "node index.js"
-
-
-},
+  "scripts": {
+    "start": "node index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -24,7 +22,8 @@
     "playwright": "^1.55.1",
     "request-promise": "^0.0.1",
     "serverless-http": "^4.0.0",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "xml2js": "^0.6.2"
   },
   "description": ""
 }
