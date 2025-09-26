@@ -1,0 +1,20 @@
+# Use the official Playwright image (includes Node + browsers + deps)
+FROM mcr.microsoft.com/playwright:v1.55.1-focal
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json first (for caching layers)
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of your app
+COPY . .
+
+# Expose your app’s port (Render usually expects 10000+ or $PORT env)
+EXPOSE 10000
+
+# Start your app
+CMD ["npm", "start"]
