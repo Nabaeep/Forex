@@ -1,5 +1,5 @@
 const express = require("express");
-const puppeteer = require("puppeteer"); // full Chromium bundled
+const { chromium } = require("playwright"); // Use Playwright's Chromium
 const cheerio = require("cheerio");
 const cors = require("cors");
 require("dotenv").config();
@@ -7,70 +7,91 @@ require("dotenv").config();
 const app = express();
 app.use(cors());
 
-async function safeGoto(page, url, retries = 3) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      return;
-    } catch (err) {
-      console.warn(`Navigation attempt ${i+1} failed, retrying...`);
-      await new Promise(r => setTimeout(r, 2000));
-    }
-  }
-  throw new Error('Failed to load Forex Factory calendar page.');
-}
+// --- Caching Logic for speed and reliability ---
+let cache = {
+    data: null,
+    timestamp: 0,
+};
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+// This helper function is no longer needed as Playwright's goto is more robust.
 
 app.get("/", async (req, res) => {
+    // --- Serve from cache if data is fresh ---
+    if (cache.data && (Date.now() - cache.timestamp < CACHE_DURATION)) {
+        console.log("Serving response from cache...");
+        return res.json(cache.data);
+    }
+    
+    console.log("Cache is old or empty. Scraping new data with Playwright/Chromium...");
+    let browser = null;
 
-  const browser = await puppeteer.launch({
-  headless: true,
-  args: ["--no-sandbox", "--disable-setuid-sandbox"],
-});
+    try {
+        // --- Launch Playwright's Chromium browser ---
+        browser = await chromium.launch({
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"], // Essential for Render/Linux environments
+        });
 
-  try {
-   
+        const context = await browser.newContext({
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+            viewport: { width: 1280, height: 800 },
+        });
 
-    const page = await browser.newPage();
-    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36");
-    await page.setViewport({ width: 1280, height: 800 });
+        const page = await context.newPage();
+        
+        // --- Navigate to the calendar page ---
+        await page.goto("https://www.forexfactory.com/calendar", { 
+            waitUntil: 'domcontentloaded', 
+            timeout: 60000 // 60-second timeout for navigation
+        });
 
-    await safeGoto(page, "https://www.forexfactory.com/calendar");
+        const html = await page.content();
+        const $ = cheerio.load(html);
 
-    const html = await page.content();
-    const $ = cheerio.load(html);
+        const events = [];
+        let lastDate = "", lastTime = "";
 
-    const events = [];
-    let lastDate = "", lastTime = "", lastImpact = "";
+        $(".calendar__row").each((i, row) => {
+            let date = $(row).find(".calendar__date span").first().text().trim();
+            let time = $(row).find(".calendar__time").first().text().trim();
+            let currency = $(row).find(".calendar__currency").text().trim();
+            let title = $(row).find(".calendar__event-title").text().trim();
 
-    $(".calendar__row").each((i, row) => {
-      let date = $(row).find(".calendar__date span").first().text().trim();
-      let time = $(row).find(".calendar__time").first().text().trim();
-      let title = $(row).find(".calendar__event-title").text().trim();
+            // --- THIS IS THE CORRECTED, MORE RELIABLE IMPACT SCRAPER ---
+            let impact = "N/A";
+            const impactSpan = $(row).find(".calendar__impact span").first();
+            const impactClass = impactSpan.attr('class') || "";
 
-      let impact = "";
-      const spanImpact = $(row).find(".calendar__impact span[title]");
-      if (spanImpact.length) impact = spanImpact.attr("title").split(" ")[0];
-      else {
-        const imgImpact = $(row).find(".calendar__impact-icon img").attr("src") || "";
-        if (imgImpact.includes("ff-impact-red")) impact = "High";
-        else if (imgImpact.includes("ff-impact-ora") || imgImpact.includes("ff-impact-ylw")) impact = "Medium";
-        else if (imgImpact.includes("ff-impact-gry")) impact = "Low";
-      }
+            if (impactClass.includes('icon--ff-impact-red')) impact = "High";
+            else if (impactClass.includes('icon--ff-impact-ora')) impact = "Medium";
+            else if (impactClass.includes('icon--ff-impact-ylw')) impact = "Low";
+            else if (impactClass.includes('icon--ff-impact-gry')) impact = "Holiday";
+            // --- End of corrected scraper ---
 
-      if (date) lastDate = date; else date = lastDate;
-      if (time) lastTime = time; else time = lastTime;
-      if (impact) lastImpact = impact; else impact = lastImpact;
+            if (date) lastDate = date; else date = lastDate;
+            if (time) lastTime = time; else time = lastTime;
+            
+            // Note: We no longer need to carry over 'lastImpact' as the new scraper finds it on every relevant row.
 
-      if (title) events.push({ date, time, title, impact });
-    });
+            if (title) {
+                events.push({ date, time, currency, title, impact });
+            }
+        });
+        
+        // --- Save the newly scraped data to the cache ---
+        cache = { data: events, timestamp: Date.now() };
+        res.json(events);
 
-    res.json(events);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || "Failed to fetch Forex events" });
-  } finally {
-    if (browser) await browser.close();
-  }
+    } catch (err) {
+        console.error("An error occurred during scraping:", err);
+        res.status(500).json({ error: err.message || "An unexpected error occurred." });
+    } finally {
+        if (browser) {
+            await browser.close();
+            console.log("Browser closed.");
+        }
+    }
 });
 
 const PORT = process.env.PORT || 3000;
