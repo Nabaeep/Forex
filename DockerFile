@@ -1,4 +1,4 @@
-# Use the official Playwright image (includes Node + browsers + deps)
+# Use official Playwright base image (comes with browsers preinstalled)
 FROM mcr.microsoft.com/playwright:v1.55.1-focal
 
 # Set working directory
@@ -13,7 +13,11 @@ RUN npm install
 # Copy the rest of your app
 COPY . .
 
-# Expose your app’s port (Render usually expects 10000+ or $PORT env)
+# Make sure Chromium is available (extra safety)
+RUN npx playwright install --with-deps chromium
+
+# Render expects dynamic ports (>=10000)
+ENV PORT=10000
 EXPOSE 10000
 
 # Start your app
