@@ -25,13 +25,16 @@ app.get("/", async (req, res) => {
     
     console.log("Cache is old or empty. Scraping new data with Playwright/Chromium...");
     let browser = null;
+        browser = await chromium.launch({
+  headless: true,
+  args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined
+});
 
     try {
         // --- Launch Playwright's Chromium browser ---
-        browser = await chromium.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"], // Essential for Render/Linux environments
-        });
+   
+
 
         const context = await browser.newContext({
             userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
